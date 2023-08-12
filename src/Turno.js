@@ -1,13 +1,28 @@
-import React from 'react';
-const empleadosPorTurno = {
-    mañana: ['Pedro', 'Ana', 'Carlos'],
-    tarde: ['Karla', 'Daniel'],
-    noche: ['Isabel', 'Hernan', 'Beatriz', 'Ricardo']
-};
+import React, { useEffect, useState } from 'react';
+import {db} from './firebase';
+import { collection, getDocs } from 'firebase/firestore';
 
 function Turno({ onTurnoSelected }) {
+    const [empleadosPorTurno, setEmpleadosPorTurno] = useState({});
+
+    useEffect(() => {
+        const fetchData = async() => {
+            const turnosCol = collection(db, 'turnos');
+            const turnosSnapshot = await getDocs(turnosCol);
+            let turnos = {};
+            turnosSnapshot.forEach(doc => turnos[doc.id] = doc.data().empleados);
+            setEmpleadosPorTurno(turnos);
+        }
+
+        fetchData();
+    }, []);
+
     const handleTurnoChange = e => {
-        onTurnoSelected(e.target.value, empleadosPorTurno[e.target.value]);
+        if (e.target.value) {
+            onTurnoSelected(e.target.value, empleadosPorTurno[e.target.value]);
+        } else {
+            onTurnoSelected('', []);
+        }
     };
 
     return (
@@ -15,11 +30,11 @@ function Turno({ onTurnoSelected }) {
             <div className="w-64">
                 <select
                     onChange={handleTurnoChange}
-                    className="form-select block w-full px-4 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    className="form-select block w-full p-area border border-gray-300 bg-white rounded shadow-sm sm:text-sm">
                     <option value="">Seleccione el turno</option>
-                    <option value="mañana">Mañana</option>
-                    <option value="tarde">Tarde</option>
-                    <option value="noche">Noche</option>
+                    {Object.keys(empleadosPorTurno).map(turno => (
+                        <option key={turno} value={turno}>{turno}</option>
+                    ))}
                 </select>
             </div>
         </div>
@@ -27,3 +42,6 @@ function Turno({ onTurnoSelected }) {
 }
 
 export default Turno;
+
+
+
